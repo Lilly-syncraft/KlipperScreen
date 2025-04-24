@@ -18,7 +18,7 @@ class KlippyFiles:
         self.callbacks.clear()
         self.files.clear()
         self.directories.clear()
-        self.gcodes_path = None
+        self.s_path = None
 
     def set_gcodes_path(self):
         virtual_sdcard = self._screen.printer.get_config_section("virtual_sdcard")

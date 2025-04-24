@@ -1,10 +1,10 @@
 import logging
 import re
-
+from pathlib import Path
 import gi
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Pango
+from gi.repository import Gtk, Pango, GdkPixbuf, GLib
 from ks_includes.KlippyGcodes import KlippyGcodes
 from ks_includes.screen_panel import ScreenPanel
 from ks_includes.widgets.autogrid import AutoGrid
@@ -47,6 +47,7 @@ class Panel(ScreenPanel):
             'retraction': self._gtk.Button("settings", _("Retraction"), "color1")
         }
         self.buttons['extrude'].connect("clicked", self.check_min_temp, "extrude", "+")
+        # Botão de Load
         self.buttons['load'].connect("clicked", self.check_min_temp, "load_unload", "+")
         self.buttons['unload'].connect("clicked", self.check_min_temp, "load_unload", "-")
         self.buttons['retract'].connect("clicked", self.check_min_temp, "extrude", "-")
@@ -171,6 +172,7 @@ class Panel(ScreenPanel):
                 self.labels[x]['box'].get_style_context().add_class("filament_sensor_empty")
             sensors.attach(self.labels[x]['box'], s, 0, 1, 1)
 
+        #   Grid dos botões do menu
         grid = Gtk.Grid(column_homogeneous=True)
         grid.attach(xbox, 0, 0, 4, 1)
 
@@ -200,26 +202,67 @@ class Panel(ScreenPanel):
         self.labels['extrude_menu'] = grid
         self.content.add(self.labels['extrude_menu'])
 
+        # Criar box do gif
+        self.gif_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, vexpand=True)
+        self.gif_box.pack_start(self.buttons["load"], False, False, 0)
+
+        # Criar o gif
+        path_name = Path(__file__).parent / ".." / "t" / "try.gif"
+        if path_name.exists():
+            try:
+                # Carregar o GIF animado
+                animation = GdkPixbuf.PixbufAnimation.new_from_file(str(path_name))
+                self.loading_gif = Gtk.Image.new_from_animation(animation)
+                
+            except Exception as e:
+                print("Erro ao carregar GIF:", e)
+                self.loading_gif = Gtk.Image.new_from_icon_name("image-missing", Gtk.IconSize.DIALOG)
+        else:
+            print("GIF não encontrado:", path_name)
+            self.loading_gif = Gtk.Image.new_from_icon_name("image-missing", Gtk.IconSize.DIALOG)
+
+        #não mostrar o GIF até que seja necessário
+        self.loading_gif.set_no_show_all(True)
+        #alinhar o GIF no centro
+        self.loading_gif.set_halign(Gtk.Align.CENTER)
+        self.loading_gif.set_valign(Gtk.Align.CENTER)
+
+        # Adiciona o GIF ao layout principal
+        self.gif_box.pack_start(self.loading_gif, True, True, 0)
+        # Adiciona o layout principal ao conteúdo
+        self.content.add(self.gif_box)
+        # Adiciona o layout principal ao painel
+        self.gif_box.show_all() 
+        #esconde o GIF
+        self.loading_gif.hide()
+
     def enable_buttons(self, enable):
         for button in self.buttons:
             if button in ("pressure", "retraction", "spoolman", "temperature"):
                 continue
             self.buttons[button].set_sensitive(enable)
+            print("enable buttons--------------------------------")
 
     def activate(self):
         self.enable_buttons(self._printer.state in ("ready", "paused"))
+        print("activate--------------------------------")
 
     def process_update(self, action, data):
         if action == "notify_gcode_response":
+            print("action--------------------------------")
             if "action:cancel" in data or "action:paused" in data:
+                print("action1--------------------------------")
                 self.enable_buttons(True)
             elif "action:resumed" in data:
+                print("action2--------------------------------")
                 self.enable_buttons(False)
             return
         if action != "notify_status_update":
+            print("action3--------------------------------")
             return
         for x in self._printer.get_tools():
             if x in data:
+                print("action4--------------------------------")
                 self.update_temp(
                     x,
                     self._printer.get_stat(x, "temperature"),
@@ -256,6 +299,7 @@ class Panel(ScreenPanel):
         self.labels[f"dist{self.distance}"].get_style_context().remove_class("horizontal_togglebuttons_active")
         self.labels[f"dist{distance}"].get_style_context().add_class("horizontal_togglebuttons_active")
         self.distance = distance
+        print("change_distance----------------------------------")
 
     def change_extruder(self, widget, extruder):
         logging.info(f"Changing extruder to {extruder}")
@@ -264,6 +308,7 @@ class Panel(ScreenPanel):
         self.labels[extruder].get_style_context().add_class("button_active")
         self._screen._send_action(widget, "printer.gcode.script",
                                   {"script": f"T{self._printer.get_tool_number(extruder)}"})
+        print("change_extrude----------------------------------")
 
     def change_speed(self, widget, speed):
         logging.info(f"### Speed {speed}")
@@ -291,6 +336,7 @@ class Panel(ScreenPanel):
         self._screen._send_action(widget, "printer.gcode.script",
                                   {"script": f"G1 E{direction}{self.distance} F{self.speed * 60}"})
 
+    # Carregar ou descarregar filamento
     def load_unload(self, widget, direction):
         if direction == "-":
             if not self.unload_filament:
@@ -302,8 +348,10 @@ class Panel(ScreenPanel):
             if not self.load_filament:
                 self._screen.show_popup_message("Macro LOAD_FILAMENT not found")
             else:
+                print("aqui está chamando")
                 self._screen._send_action(widget, "printer.gcode.script",
                                           {"script": f"LOAD_FILAMENT SPEED={self.speed * 60}"})
+                print("não, aqui está chamando")
 
     def enable_disable_fs(self, switch, gparams, name, x):
         if switch.get_active():
@@ -316,14 +364,46 @@ class Panel(ScreenPanel):
             self._screen._ws.klippy.gcode_script(f"SET_FILAMENT_SENSOR SENSOR={name} ENABLE=0")
             self.labels[x]['box'].get_style_context().remove_class("filament_sensor_empty")
             self.labels[x]['box'].get_style_context().remove_class("filament_sensor_detected")
+        print("enable_disable----------------------------------")
 
     def update_temp(self, extruder, temp, target, power):
         if not temp:
             return
         new_label_text = f"{temp or 0:.0f}"
         if target:
+            print(f"target é de {new_label_text}")
             new_label_text += f"/{target:.0f}"
         new_label_text += "°\n"
         if self._show_heater_power and power:
             new_label_text += f" {power * 100:.0f}%"
+            print(f"a temperatura ainda é de {new_label_text}")
         find_widget(self.labels[extruder], Gtk.Label).set_text(new_label_text)
+
+        print("update----------------------------------")
+
+    def _operation_gif(self):
+        pass
+
+    
+    # Chamado o Gif
+    def _start_loading_gif(self):
+        # Mostra o GIF animado
+        def show_gif():
+            print("Exibindo GIF animado...")  
+            self.loading_gif.show()
+            # Redesenha o layout, como se fosse um refresh
+            self.loading_gif.queue_draw()
+            self.gif_box.queue_draw()
+            return False
+        # Adiciona a função de mostrar o GIF à fila de eventos
+        GLib.idle_add(show_gif)
+
+    # Para o GIF
+    def _stop_loading_gif(self):
+        def hide_gif():
+            print("Escondendo GIF animado...") 
+            self.loading_gif.hide()
+            # Mostra o botão novamente
+            #self.labels["restart_btn"].show()
+            return False
+        GLib.idle_add(hide_gif)

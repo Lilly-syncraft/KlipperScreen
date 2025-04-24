@@ -1,0 +1,3 @@
+PyGObject é um pacote python que contém a vinculação com bibliotecas GObjects, como o Gtk, Glib, Gdk, Pango, entre outras.
+Com o Gtk, é possivél criar telas interativas, ele é organizado em forma de Tabela, Grid e Box. Basicamente ele é estruturado em linhas e colunas.
+O Gtk usa orientação a eventos, ou seja, enquando ele não receber um sinal do widget, por exemplo "Clicked", ele fica adormecido até que seja dado uma ação.
