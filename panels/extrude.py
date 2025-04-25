@@ -203,8 +203,7 @@ class Panel(ScreenPanel):
         self.content.add(self.labels['extrude_menu'])
 
         # Criar box do gif
-        self.gif_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, vexpand=True)
-        self.gif_box.pack_start(self.buttons["load"], False, False, 0)
+        self.gif_box = Gtk.Grid(orientation=Gtk.Orientation.HORIZONTAL, vexpand=True)
 
         # Criar o gif
         path_name = Path(__file__).parent / ".." / "t" / "try.gif"
@@ -220,15 +219,14 @@ class Panel(ScreenPanel):
         else:
             print("GIF não encontrado:", path_name)
             self.loading_gif = Gtk.Image.new_from_icon_name("image-missing", Gtk.IconSize.DIALOG)
-
+        
         #não mostrar o GIF até que seja necessário
         self.loading_gif.set_no_show_all(True)
         #alinhar o GIF no centro
         self.loading_gif.set_halign(Gtk.Align.CENTER)
         self.loading_gif.set_valign(Gtk.Align.CENTER)
-
         # Adiciona o GIF ao layout principal
-        self.gif_box.pack_start(self.loading_gif, True, True, 0)
+        self.gif_box.attach(self.loading_gif, 1, 0, 1, 1)
         # Adiciona o layout principal ao conteúdo
         self.content.add(self.gif_box)
         # Adiciona o layout principal ao painel
@@ -338,6 +336,7 @@ class Panel(ScreenPanel):
 
     # Carregar ou descarregar filamento
     def load_unload(self, widget, direction):
+        
         if direction == "-":
             if not self.unload_filament:
                 self._screen.show_popup_message("Macro UNLOAD_FILAMENT not found")
@@ -348,10 +347,8 @@ class Panel(ScreenPanel):
             if not self.load_filament:
                 self._screen.show_popup_message("Macro LOAD_FILAMENT not found")
             else:
-                print("aqui está chamando")
                 self._screen._send_action(widget, "printer.gcode.script",
                                           {"script": f"LOAD_FILAMENT SPEED={self.speed * 60}"})
-                print("não, aqui está chamando")
 
     def enable_disable_fs(self, switch, gparams, name, x):
         if switch.get_active():
@@ -364,9 +361,10 @@ class Panel(ScreenPanel):
             self._screen._ws.klippy.gcode_script(f"SET_FILAMENT_SENSOR SENSOR={name} ENABLE=0")
             self.labels[x]['box'].get_style_context().remove_class("filament_sensor_empty")
             self.labels[x]['box'].get_style_context().remove_class("filament_sensor_detected")
-        print("enable_disable----------------------------------")
 
     def update_temp(self, extruder, temp, target, power):
+        # Chamando o gif
+        self._operation_gif()
         if not temp:
             return
         new_label_text = f"{temp or 0:.0f}"
@@ -378,18 +376,27 @@ class Panel(ScreenPanel):
             new_label_text += f" {power * 100:.0f}%"
             print(f"a temperatura ainda é de {new_label_text}")
         find_widget(self.labels[extruder], Gtk.Label).set_text(new_label_text)
-
         print("update----------------------------------")
 
     def _operation_gif(self):
-        pass
+        # Pega o status da temperatura
+        temp = self._printer.get_stat(self.current_extruder, 'temperature')
+        target = self._printer.get_stat(self.current_extruder, 'target')
+        
+    # Só vai mostrar o gif se a temperatura estiver abaixo do mínimo
+        if temp < target or target > 0:
+            #while "current_extruder":
+                self._start_loading_gif()
+        else:
+            self._stop_loading_gif()
 
-    
     # Chamado o Gif
     def _start_loading_gif(self):
         # Mostra o GIF animado
         def show_gif():
-            print("Exibindo GIF animado...")  
+            print("Exibindo GIF animado...")
+            # Esconde os botões  
+            GLib.idle_add(self.labels['extrude_menu'].hide)
             self.loading_gif.show()
             # Redesenha o layout, como se fosse um refresh
             self.loading_gif.queue_draw()
@@ -402,8 +409,8 @@ class Panel(ScreenPanel):
     def _stop_loading_gif(self):
         def hide_gif():
             print("Escondendo GIF animado...") 
+            # Mostra os botões novamente
+            self.labels['extrude_menu'].show()
             self.loading_gif.hide()
-            # Mostra o botão novamente
-            #self.labels["restart_btn"].show()
             return False
         GLib.idle_add(hide_gif)

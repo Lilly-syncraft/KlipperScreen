@@ -88,7 +88,7 @@ class Panel(ScreenPanel):
 
     # Simula uma tarefa longa
     def _simulate_long_task(self):
-        #time.sleep(3)
+        time.sleep(6)
         print("Tarefa concluída!")
         # Para o GIF
         self._stop_loading_gif()
