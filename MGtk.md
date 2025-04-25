@@ -2,3 +2,8 @@ PyGObject é um pacote python que contém a vinculação com bibliotecas GObject
 Com o Gtk, é possivél criar telas interativas, ele é organizado em forma de Tabela, Grid e Box. Basicamente ele é estruturado em linhas e colunas.
 Como a maioria dos toolkits de GUI, o GTK+ usa um modelo de programação orientada a eventos. Quando o usuário não está fazendo nada, o GTK+ fica no loop principal e aguarda a entrada. Se o usuário executar alguma ação – digamos, um clique do mouse — o loop principal “acorda” e entrega um evento para o GTK+.
 Quando widgets recebem um evento, eles frequentemente emitem um ou mais sinais. Sinais notificam seu programa que “algo interessante aconteceu” invocando funções que você conectou ao sinal. Tais funções são comumente conhecidas como callbacks ou retorno de chamada. Quando seus retornos de chamada são invocados, você normalmente toma algumas ações – por exemplo, quando um botão Abrir é clicado, você pode exibir uma caixa de diálogo de seleção de arquivos. Depois que um retorno de chamada terminar, o GTK+ retornará ao loop principal e aguardará mais entrada do usuário.
+
+Estrutura simples de um botão
+button = Gtk.Button(label="Abrir diálogo")
+button.connect("clicked", self.on_button_clicked)
+box_btn.add(button)
