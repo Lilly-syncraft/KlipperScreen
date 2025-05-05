@@ -44,7 +44,23 @@ screen.py # principal, para gerar a tela geral
 ```
 # NOTA SOBRE O GIF
 
-A função que vai executar uma ação, chama a função _send_action. Assim que chamada ela usa a função 'isinstance' para checar se widget é um botão e se for vai chamar o Button_busy e o send_method (que verefica a conecção com o web socket e caso haver uma conecção ele vai enviar informações/comandos em formato json), além de chamar o enable_widget (sendo ele um call-back, assim que o send_method enviar uma resposta a ação, ele é executado e o spinner para), que esta responsavel por um condição de parada, onde
+A função que vai executar uma ação, chama a função _send_action. Assim que chamada ela usa a função 'isinstance' para checar se widget é um botão e se for vai executar o Button_busy (chama o spinner) e o send_method (que vai vereficar a conexão com o web socket e caso haver uma conexão ele vai enviar informações/comandos em formato json), além de chamar o enable_widget (sendo ele um call-back, assim que o send_method enviar uma resposta a ação, ele é executado e o spinner), que esta responsável por um condição de parada, onde
 o spinner esta sendo chamado repetidamente até a função retornar falso ou g_source_remove.
+```python
+    def _send_action(self, widget, method, params):
+        logging.info(f"{method}: {params}")
+        if isinstance(widget, Gtk.Button):
+            self.gtk.Button_busy(widget, True)
+            self._ws.send_method(method, params, self.enable_widget, widget)
+        else:
+            self._ws.send_method(method, params)
 
+    def _send_action(self, widget, method, params):
+        logging.info(f"{method}: {params}")
+        if isinstance(widget, Gtk.Button):
+            self.gtk.Button_busy(widget, True)
+            self._ws.send_method(method, params, self.enable_widget, widget)
+        else:
+            self._ws.send_method(method, params)
+```
 enable_widget, ESTÁ LOCALIZADO NO SCREEN
