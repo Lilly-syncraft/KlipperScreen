@@ -33,7 +33,7 @@ from ks_includes.widgets.lockscreen import LockScreen
 from ks_includes.widgets.screensaver import ScreenSaver
 from ks_includes.config import KlipperScreenConfig
 from panels.base_panel import BasePanel
-
+from panels.extrude import Panel
 
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
@@ -79,6 +79,7 @@ class KlipperScreen(Gtk.Window):
     tempstore_timeout = None
     check_dpms_timeout = None
 
+    
     def __init__(self, args):
         self.server_info = None
         try:
@@ -93,6 +94,7 @@ class KlipperScreen(Gtk.Window):
         self.dialogs = []
         self.confirm = None
         self.panels_reinit = []
+        self.TESTE = Panel(self)
         self.last_popup_time = datetime.now()
 
         configfile = os.path.normpath(os.path.expanduser(args.configfile))
@@ -646,7 +648,7 @@ class KlipperScreen(Gtk.Window):
     def set_dpms(self, use_dpms):
         if not use_dpms:
             if self.check_dpms_timeout is not None:
-                GLib.source_remove(self.check_dpms_timeout)
+                GLib._remove(self.check_dpms_timeout)
             self.check_dpms_timeout = None
             state = functions.get_DPMS_state()
             if state != functions.DPMS_State.Fail:
@@ -996,9 +998,11 @@ class KlipperScreen(Gtk.Window):
             self._ws.send_method(method, params)
 
     def enable_widget(self, *args):
+        self.TESTE._stop_loading_gif(self)
         for x in args:
             if isinstance(x, Gtk.Button):
                 GLib.timeout_add(150, self.gtk.Button_busy, x, False)
+                
 
     def printer_initializing(self, msg, go_to_splash=False):
         if 'splash_screen' not in self.panels or go_to_splash:

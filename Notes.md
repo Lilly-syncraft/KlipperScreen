@@ -41,3 +41,10 @@ moonraker_port: 7125 #porta
 \scripts
 \styles
 screen.py # principal, para gerar a tela geral
+```
+# NOTA SOBRE O GIF
+
+A função que vai executar uma ação, chama a função _send_action. Assim que chamada ela usa a função 'isinstance' para checar se widget é um botão e se for vai chamar o Button_busy e o send_method (que verefica a conecção com o web socket e caso haver uma conecção ele vai enviar informações/comandos em formato json), além de chamar o enable_widget (sendo ele um call-back, assim que o send_method enviar uma resposta a ação, ele é executado e o spinner para), que esta responsavel por um condição de parada, onde
+o spinner esta sendo chamado repetidamente até a função retornar falso ou g_source_remove.
+
+enable_widget, ESTÁ LOCALIZADO NO SCREEN

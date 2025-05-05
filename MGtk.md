@@ -14,6 +14,29 @@ btn.connect("clicked", self.load_menu)
 ```
 Onde o sinal é o 'clicked' e a função o self.load_menu.
 
+### Para começar, podemos cria uma janela, que será responsável por manter todos os widgets, boxs e grids
+
+```python
+#importação biblioteca PyGObject
+import gi
+
+#Nessário especificar verção e a biblioteca que será utiliza, pois pode haver incompatibilidade com outras versões
+gi.require_version("Gtk", "3.0")
+#importando oq usará do PyGObject
+from gi.repository import Gtk
+
+#Definindo a janela
+win = Gtk.Window()
+#Precisa para se sertificar que a janela fechara quando clicado no 'x'
+win.connect("destroy", Gtk.main_quit)
+#Mostrar a janela
+win.show_all()
+#inicia a janela
+Gtk.main()
+```
+
+
+
 ## Gif animado e KlipperScreen
 ### Criando um gif para que quando o botão de load for precionado ele possa aparecer enquanto a impressora faz a sua rotina.
 O código abaixo representa a criação do grid, onde o gif ficará localizado, e a definição de um gif: 

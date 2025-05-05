@@ -239,28 +239,23 @@ class Panel(ScreenPanel):
             if button in ("pressure", "retraction", "spoolman", "temperature"):
                 continue
             self.buttons[button].set_sensitive(enable)
-            print("enable buttons--------------------------------")
 
     def activate(self):
         self.enable_buttons(self._printer.state in ("ready", "paused"))
-        print("activate--------------------------------")
 
     def process_update(self, action, data):
         if action == "notify_gcode_response":
-            print("action--------------------------------")
             if "action:cancel" in data or "action:paused" in data:
-                print("action1--------------------------------")
                 self.enable_buttons(True)
+                
             elif "action:resumed" in data:
-                print("action2--------------------------------")
-                self.enable_buttons(False)
+                self.enable_buttons(False)     
             return
+        
         if action != "notify_status_update":
-            print("action3--------------------------------")
             return
         for x in self._printer.get_tools():
             if x in data:
-                print("action4--------------------------------")
                 self.update_temp(
                     x,
                     self._printer.get_stat(x, "temperature"),
@@ -297,7 +292,6 @@ class Panel(ScreenPanel):
         self.labels[f"dist{self.distance}"].get_style_context().remove_class("horizontal_togglebuttons_active")
         self.labels[f"dist{distance}"].get_style_context().add_class("horizontal_togglebuttons_active")
         self.distance = distance
-        print("change_distance----------------------------------")
 
     def change_extruder(self, widget, extruder):
         logging.info(f"Changing extruder to {extruder}")
@@ -306,7 +300,6 @@ class Panel(ScreenPanel):
         self.labels[extruder].get_style_context().add_class("button_active")
         self._screen._send_action(widget, "printer.gcode.script",
                                   {"script": f"T{self._printer.get_tool_number(extruder)}"})
-        print("change_extrude----------------------------------")
 
     def change_speed(self, widget, speed):
         logging.info(f"### Speed {speed}")
@@ -330,23 +323,24 @@ class Panel(ScreenPanel):
             self.load_unload(widget, direction)
 
     def extrude(self, widget, direction):
+        self._start_loading_gif()
         self._screen._ws.klippy.gcode_script(KlippyGcodes.EXTRUDE_REL)
         self._screen._send_action(widget, "printer.gcode.script",
                                   {"script": f"G1 E{direction}{self.distance} F{self.speed * 60}"})
-
     # Carregar ou descarregar filamento
     def load_unload(self, widget, direction):
-        
         if direction == "-":
             if not self.unload_filament:
                 self._screen.show_popup_message("Macro UNLOAD_FILAMENT not found")
             else:
+                self._start_loading_gif()
                 self._screen._send_action(widget, "printer.gcode.script",
                                           {"script": f"UNLOAD_FILAMENT SPEED={self.speed * 60}"})
         if direction == "+":
             if not self.load_filament:
                 self._screen.show_popup_message("Macro LOAD_FILAMENT not found")
             else:
+                self._start_loading_gif()
                 self._screen._send_action(widget, "printer.gcode.script",
                                           {"script": f"LOAD_FILAMENT SPEED={self.speed * 60}"})
 
@@ -362,9 +356,7 @@ class Panel(ScreenPanel):
             self.labels[x]['box'].get_style_context().remove_class("filament_sensor_empty")
             self.labels[x]['box'].get_style_context().remove_class("filament_sensor_detected")
 
-    def update_temp(self, extruder, temp, target, power):
-        # Chamando o gif
-        self._operation_gif()
+    def update_temp(self, extruder, temp, target, power):       
         if not temp:
             return
         new_label_text = f"{temp or 0:.0f}"
@@ -376,19 +368,7 @@ class Panel(ScreenPanel):
             new_label_text += f" {power * 100:.0f}%"
             print(f"a temperatura ainda é de {new_label_text}")
         find_widget(self.labels[extruder], Gtk.Label).set_text(new_label_text)
-        print("update----------------------------------")
 
-    def _operation_gif(self):
-        # Pega o status da temperatura
-        temp = self._printer.get_stat(self.current_extruder, 'temperature')
-        target = self._printer.get_stat(self.current_extruder, 'target')
-        
-    # Só vai mostrar o gif se a temperatura estiver abaixo do mínimo
-        if temp < target or target > 0:
-            #while "current_extruder":
-                self._start_loading_gif()
-        else:
-            self._stop_loading_gif()
 
     # Chamado o Gif
     def _start_loading_gif(self):
