@@ -34,7 +34,6 @@ from ks_includes.widgets.screensaver import ScreenSaver
 from ks_includes.config import KlipperScreenConfig
 from panels.base_panel import BasePanel
 
-
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 klipperscreendir = pathlib.Path(__file__).parent.resolve()

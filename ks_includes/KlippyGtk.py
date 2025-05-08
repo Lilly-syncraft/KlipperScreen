@@ -157,15 +157,15 @@ class KlippyGtk:
             return None
         stream.close_async(2)
         return pixbuf
-
-    def Button(self, image_name=None, label=None, style=None, scale=None, position=Gtk.PositionType.TOP, lines=2, gif = None):
+    
+    def Button(self, image_name=None, label=None, style=None,scale=None, position=Gtk.PositionType.TOP, lines=2,  gif = None):
         if self.font_size_type == "max" and label is not None:
             image_name = None
         b = Gtk.Button(hexpand=True, vexpand=True, can_focus=False, image_position=position, always_show_image=True)
         if label is not None:
             b.set_label(label.replace("\n", " "))
         if image_name is not None:
-            b.set_name(image_name)
+            b.set_name(image_name) 
             if scale is None:
                 scale = self.button_image_scale
             if label is None:
@@ -181,7 +181,8 @@ class KlippyGtk:
 
             if gif:
                 b.gif = gif
-                return b
+                return b 
+
 
         if label is not None:
             format_label(b, lines)
@@ -196,7 +197,6 @@ class KlippyGtk:
         win = widget.get_toplevel()
         overlay = getattr(win, 'overlay', None)
         if busy:
-            print("i´m busy")
             widget.set_sensitive(False)
         # Esconde o conteúdo normal do botão (ícone/texto)
             widget.get_child().get_child().get_children()[0].hide()
@@ -204,9 +204,11 @@ class KlippyGtk:
             if "gif" and overlay:
                 print("isso está indo")
                 #gif_path = os.path.join(widget.get_toplevel()._screen.themedir, widget.gif + ".gif")
-                gif_path = Path(__file__).parent / ".." / "t" / "try.gif"
+                gif_name = getattr(widget, 'gif', None)
+                if gif_name and overlay:
+                    gif_path = Path(__file__).parent / ".." / "t" / f"{gif_name}.gif"
                 try:
-                    print("isso també vai")
+                    print("isso também vai")
                     anim = GdkPixbuf.PixbufAnimation.new_from_file(str(gif_path))  # cria animação a partir do arquivo
                     image = Gtk.Image.new_from_animation(anim)
                 # Ajusta para ocupar tela inteira 
@@ -214,7 +216,7 @@ class KlippyGtk:
                     image.set_valign(Gtk.Align.FILL)
                     image.set_hexpand(True) 
                     image.set_vexpand(True)
-                    image.show()
+                    image.show()      
                     overlay.add_overlay(image)
                     widget._busy_image = image  # guarda referência para remover depois
                 except Exception as e:
