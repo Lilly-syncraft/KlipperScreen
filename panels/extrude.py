@@ -20,7 +20,6 @@ class Panel(ScreenPanel):
         macros = self._printer.get_config_section_list("gcode_macro ")
         self.load_filament = any("LOAD_FILAMENT" in macro.upper() for macro in macros)
         self.unload_filament = any("UNLOAD_FILAMENT" in macro.upper() for macro in macros)
-
         self.speeds = ['1', '2', '5', '25']
         self.distances = ['5', '10', '15', '25']
         if self.ks_printer_cfg is not None:
@@ -48,9 +47,9 @@ class Panel(ScreenPanel):
         }
         self.buttons['extrude'].connect("clicked", self.check_min_temp, "extrude", "+")
         # Botão de Load
-        self.buttons['load'].connect("clicked", self.check_min_temp, "load_unload", "+")
+        self.buttons['load'].connect("clicked", self.check_min_temp,"load_unload", "+")
         self.buttons['unload'].connect("clicked", self.check_min_temp, "load_unload", "-")
-        self.buttons['retract'].connect("clicked", self.check_min_temp, "extrude", "-")
+        self.buttons['retract'].connect("clicked", self.check_min_temp,"extrude", "-")
         self.buttons['temperature'].connect("clicked", self.menu_item_clicked, {
             "panel": "temperature"
         })
@@ -205,8 +204,11 @@ class Panel(ScreenPanel):
         # Criar box do gif
         self.gif_box = Gtk.Grid(orientation=Gtk.Orientation.HORIZONTAL, vexpand=True)
 
+#-------------------------- deu bom ---------------------------------------------------------
         # Criar o gif
-        path_name = Path(__file__).parent / ".." / "t" / "try.gif"
+        path_name = Path(__file__)
+        path_name = path_name.parent / ".." / "t" / "try.gif"
+        #.parent / ".." / "t" / "try.gif"
         if path_name.exists():
             try:
                 # Carregar o GIF animado
@@ -323,7 +325,7 @@ class Panel(ScreenPanel):
             self.load_unload(widget, direction)
 
     def extrude(self, widget, direction):
-        self._start_loading_gif()
+        # self._start_loading_gif()
         self._screen._ws.klippy.gcode_script(KlippyGcodes.EXTRUDE_REL)
         self._screen._send_action(widget, "printer.gcode.script",
                                   {"script": f"G1 E{direction}{self.distance} F{self.speed * 60}"})
@@ -333,14 +335,14 @@ class Panel(ScreenPanel):
             if not self.unload_filament:
                 self._screen.show_popup_message("Macro UNLOAD_FILAMENT not found")
             else:
-                self._start_loading_gif()
+                # self._start_loading_gif()
                 self._screen._send_action(widget, "printer.gcode.script",
                                           {"script": f"UNLOAD_FILAMENT SPEED={self.speed * 60}"})
         if direction == "+":
             if not self.load_filament:
                 self._screen.show_popup_message("Macro LOAD_FILAMENT not found")
             else:
-                self._start_loading_gif()
+                # self._start_loading_gif()
                 self._screen._send_action(widget, "printer.gcode.script",
                                           {"script": f"LOAD_FILAMENT SPEED={self.speed * 60}"})
 

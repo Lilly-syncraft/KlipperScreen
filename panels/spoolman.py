@@ -13,7 +13,7 @@ from datetime import datetime
 try:
     from zoneinfo import ZoneInfo
 except ImportError:
-    from backports.zoneinfo import ZoneInfo
+    from backports.zoneinfo import ZoneInfo # type: ignore
 
 
 def format_date(date):

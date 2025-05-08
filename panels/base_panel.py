@@ -10,8 +10,9 @@ from datetime import datetime
 from math import log
 from ks_includes.screen_panel import ScreenPanel
 
+
 try:
-    import psutil
+    import psutil # type: ignore
     psutil_available = True
 except ImportError:
     psutil_available = False

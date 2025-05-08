@@ -2,12 +2,14 @@
 import logging
 import os
 import pathlib
+from pathlib import Path
 
 import gi
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gdk, GdkPixbuf, Gio, Gtk, Pango
+from gi.repository import Gdk, GdkPixbuf, Gio, Gtk, Pango, GLib
 from ks_includes.widgets.scroll import CustomScrolledWindow
+
 
 
 def find_widget(widget, wanted_type):
@@ -34,6 +36,7 @@ class KlippyGtk:
     labels = {}
 
     def __init__(self, screen):
+        self.p_filho = None
         self.screen = screen
         self.themedir = os.path.join(pathlib.Path(__file__).parent.resolve().parent, "styles", screen.theme, "images")
         self.font_size_type = screen._config.get_main_config().get("font_size", "medium")
@@ -46,7 +49,6 @@ class KlippyGtk:
         self.button_image_scale = 1.38
         self.bsidescale = .65  # Buttons with image at the side
         self.dialog_buttons_height = round(self.height / 5)
-
         if self.font_size_type == "max":
             self.font_size = self.font_size * 1.06
             self.img_scale = self.img_scale * 0.7
@@ -66,7 +68,7 @@ class KlippyGtk:
         self.img_height = self.font_size * 3
         self.titlebar_height = self.font_size * 2
         logging.info(f"Font size: {self.font_size:.1f} ({self.font_size_type})")
-
+        self.p = None
         if self.screen.vertical_mode:
             self.action_bar_width = int(self.width)
             self.action_bar_height = int(self.height * .1)
@@ -156,7 +158,7 @@ class KlippyGtk:
         stream.close_async(2)
         return pixbuf
 
-    def Button(self, image_name=None, label=None, style=None, scale=None, position=Gtk.PositionType.TOP, lines=2):
+    def Button(self, image_name=None, label=None, style=None, scale=None, position=Gtk.PositionType.TOP, lines=2, gif = None):
         if self.font_size_type == "max" and label is not None:
             image_name = None
         b = Gtk.Button(hexpand=True, vexpand=True, can_focus=False, image_position=position, always_show_image=True)
@@ -170,11 +172,16 @@ class KlippyGtk:
                 scale = scale * 1.4
             width = height = self.img_scale * scale
             b.set_image(self.Image(image_name, width, height))
-            spinner = Gtk.Spinner(width_request=width, height_request=height, no_show_all=True)
-            spinner.hide()
-            box = find_widget(b, Gtk.Box)
-            if box:
-                box.add(spinner)
+
+            # spinner = Gtk.Spinner(width_request=width, height_request=height, no_show_all=True)
+            # spinner.hide()
+            # box = find_widget(b, Gtk.Box)
+            # if box:
+            #     box.add(spinner)
+
+            if gif:
+                b.gif = gif
+                return b
 
         if label is not None:
             format_label(b, lines)
@@ -185,23 +192,39 @@ class KlippyGtk:
 
     @staticmethod
     def Button_busy(widget, busy):
-        spinner = find_widget(widget, Gtk.Spinner)
-        image = find_widget(widget, Gtk.Image)
+    # Referência ao overlay da janela principal
+        win = widget.get_toplevel()
+        overlay = getattr(win, 'overlay', None)
         if busy:
+            print("i´m busy")
             widget.set_sensitive(False)
-            if image:
-                widget.set_always_show_image(False)
-                image.hide()
-            if spinner:
-                spinner.start()
-                spinner.show()
+        # Esconde o conteúdo normal do botão (ícone/texto)
+            widget.get_child().get_child().get_children()[0].hide()
+        # Se o botão tem GIF associado, carrega e exibe em tela cheia
+            if "gif" and overlay:
+                print("isso está indo")
+                #gif_path = os.path.join(widget.get_toplevel()._screen.themedir, widget.gif + ".gif")
+                gif_path = Path(__file__).parent / ".." / "t" / "try.gif"
+                try:
+                    print("isso també vai")
+                    anim = GdkPixbuf.PixbufAnimation.new_from_file(str(gif_path))  # cria animação a partir do arquivo
+                    image = Gtk.Image.new_from_animation(anim)
+                # Ajusta para ocupar tela inteira 
+                    image.set_halign(Gtk.Align.FILL)
+                    image.set_valign(Gtk.Align.FILL)
+                    image.set_hexpand(True) 
+                    image.set_vexpand(True)
+                    image.show()
+                    overlay.add_overlay(image)
+                    widget._busy_image = image  # guarda referência para remover depois
+                except Exception as e:
+                    logging.error(f"Erro ao carregar GIF {gif_path}: {e}")
         else:
-            if image:
-                widget.set_always_show_image(True)
-                image.show()
-            if spinner:
-                spinner.stop()
-                spinner.hide()
+        # Ao sair do estado ocupado, remove a imagem animada exibida
+            if hasattr(widget, '_busy_image') and overlay:
+                overlay.remove(widget._busy_image)
+                widget._busy_image = None
+            widget.get_child().get_child().get_children()[0].show()
             widget.set_sensitive(True)
 
     def dialog_content_decouple(self, widget, event, dialog):

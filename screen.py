@@ -33,7 +33,7 @@ from ks_includes.widgets.lockscreen import LockScreen
 from ks_includes.widgets.screensaver import ScreenSaver
 from ks_includes.config import KlipperScreenConfig
 from panels.base_panel import BasePanel
-from panels.extrude import Panel
+
 
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
@@ -79,7 +79,6 @@ class KlipperScreen(Gtk.Window):
     tempstore_timeout = None
     check_dpms_timeout = None
 
-    
     def __init__(self, args):
         self.server_info = None
         try:
@@ -94,7 +93,6 @@ class KlipperScreen(Gtk.Window):
         self.dialogs = []
         self.confirm = None
         self.panels_reinit = []
-        self.TESTE = Panel
         self.last_popup_time = datetime.now()
 
         configfile = os.path.normpath(os.path.expanduser(args.configfile))
@@ -988,7 +986,7 @@ class KlipperScreen(Gtk.Window):
         self.gtk.remove_dialog(dialog)
         if response_id == Gtk.ResponseType.OK:
             self._send_action(None, method, params)
-
+#-----------------------------------------------------------------------------------------------------
     def _send_action(self, widget, method, params):
         logging.info(f"{method}: {params}")
         if isinstance(widget, Gtk.Button):
@@ -998,7 +996,6 @@ class KlipperScreen(Gtk.Window):
             self._ws.send_method(method, params)
 
     def enable_widget(self, *args):
-        self.TESTE._stop_loading_gif(self)
         for x in args:
             if isinstance(x, Gtk.Button):
                 GLib.timeout_add(150, self.gtk.Button_busy, x, False)
