@@ -71,4 +71,5 @@ OS GIFS DEVEM ESTAR NA PASTA styles/t, CASO QUEIRA REDIRECIONAR MUDE A SEGUINTE 
 gif_path = Path(__file__).parent / ".." / "t" / f"{gif_name}.gif"
 ```
 ### Obs:.
-Código do gif está comentado, no mais seria isso na questão de aplicar. 
+DETALHE IMPORTANTE!!!
+CASO NÃO HAVER NENHUM GIF DEFINIDO PARA UM BOTÃO QUE CONTENHA A FUNÇÃO 'BUSY', ELE NÃO VAI EXECUTAR A AÇÃO QUE DEVERIA. 
