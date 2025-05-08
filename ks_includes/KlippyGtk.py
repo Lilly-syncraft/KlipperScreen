@@ -173,16 +173,9 @@ class KlippyGtk:
             width = height = self.img_scale * scale
             b.set_image(self.Image(image_name, width, height))
 
-            # spinner = Gtk.Spinner(width_request=width, height_request=height, no_show_all=True)
-            # spinner.hide()
-            # box = find_widget(b, Gtk.Box)
-            # if box:
-            #     box.add(spinner)
-
             if gif:
                 b.gif = gif
                 return b 
-
 
         if label is not None:
             format_label(b, lines)
@@ -203,9 +196,10 @@ class KlippyGtk:
         # Se o botão tem GIF associado, carrega e exibe em tela cheia
             if "gif" and overlay:
                 print("isso está indo")
-                #gif_path = os.path.join(widget.get_toplevel()._screen.themedir, widget.gif + ".gif")
+                
                 gif_name = getattr(widget, 'gif', None)
                 if gif_name and overlay:
+                    # Para mudar a pasta do gif, edite o código abaixo:
                     gif_path = Path(__file__).parent / ".." / "t" / f"{gif_name}.gif"
                 try:
                     print("isso também vai")
